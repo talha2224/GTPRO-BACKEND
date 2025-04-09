@@ -6,10 +6,10 @@ const AccountSchema = mongoose.Schema({
 
     firstName:{type:String,required:true},
     lastName:{type:String,required:true},
-    idType:{type:String,required:true},
-    idCard:{type:String,required:true},
+    idType:{type:String,default:null},
+    idCard:{type:String,default:null},
     profile:{type:String,default:null},
-    password:{type:String,required:true},
+    password:{type:String,default:null},
     registrationSource:{type:String,default:"Normal"},
     registrationBy:{type:String,default:"email"},
 
