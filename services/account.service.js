@@ -47,7 +47,6 @@ const updateAccountOnboardingData = async (req, res) => {
     try {
         let { idType, password,registrationBy } = req.body
         let {id} = req?.params
-
         let image = req?.file
         let imageUrl = await uploadFile(image);
 
@@ -58,7 +57,7 @@ const updateAccountOnboardingData = async (req, res) => {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: null }, msg: "Account not exits with this email", code: 400 })
             }
             let hash = await bcrypt.hash(password, 10)
-            let result = await AccountModel.findByIdAndUpdate({idType, idCard: imageUrl, password: hash,},{new:true})
+            let result = await AccountModel.findByIdAndUpdate(id,{idType, idCard: imageUrl, password: hash,},{new:true})
             return res.status(200).json({ data: result, msg: "Account Created With This Email", status: 200 })
         }
         else {
@@ -67,7 +66,7 @@ const updateAccountOnboardingData = async (req, res) => {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: null }, msg: "Account not exits with this phone", code: 400 })
             }
             let hash = await bcrypt.hash(password, 10)
-            let result = await AccountModel.findByIdAndUpdate({idType,idCard: imageUrl, password: hash,},{new:true})
+            let result = await AccountModel.findByIdAndUpdate(id,{idType,idCard: imageUrl, password: hash,},{new:true})
             return res.status(200).json({ data:result, msg: "Account Created With This Phone.", status: 200 })
         }
     }
