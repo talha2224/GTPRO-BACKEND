@@ -1,8 +1,9 @@
 const router = require("express").Router()
 const { multipleupload } = require("../config/multer.config")
-const { createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, uploadPicture, updateProfile, deleteAccount,reactivateAccount, createAccountWithGoogle, loginAccountWithGoogle} = require("../services/account.service")
+const {updateAccountOnboardingData,createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, uploadPicture, updateProfile, deleteAccount,reactivateAccount, createAccountWithGoogle, loginAccountWithGoogle} = require("../services/account.service")
 
 router.post("/register",multipleupload.single('image'),createAccount)
+router.put("/update/onboarding/data/:id",multipleupload.single('image'),updateAccountOnboardingData)
 router.post("/login",loginAccount)
 router.post("/register/google",multipleupload.single('image'),createAccountWithGoogle)
 router.post("/login/google",loginAccountWithGoogle)
