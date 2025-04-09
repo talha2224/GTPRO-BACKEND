@@ -12,10 +12,8 @@ const { WalletModel } = require("../models/wallet.model");
 // NORMAL AUTH FLOW 
 const createAccount = async (req, res) => {
     try {
-        let { firstName, lastName, idType, password, phone, email, registrationBy } = req.body
+        let { firstName, lastName,phone, email, registrationBy } = req.body
 
-        let image = req?.file
-        let imageUrl = await uploadFile(image);
 
         if (registrationBy == "email") {
 
@@ -23,10 +21,9 @@ const createAccount = async (req, res) => {
             if (alreadyExits) {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: alreadyExits }, msg: "Account already exits with this email", code: 400 })
             }
-            let hash = await bcrypt.hash(password, 10)
             let pin = generatePin()
             await sendDynamicMail("verification", email, firstName, pin);
-            let result = await AccountModel.create({ firstName, lastName, idType, idCard: imageUrl, email, password: hash, otp: pin, registrationBy })
+            let result = await AccountModel.create({ firstName, lastName,email,otp: pin, registrationBy })
             await WalletModel.create({ userId: result?._id })
             return res.status(200).json({ data: result, msg: "Account Created With This Email. Kindly Verify Your Account", status: 200 })
         }
@@ -35,10 +32,8 @@ const createAccount = async (req, res) => {
             if (alreadyExits) {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: alreadyExits }, msg: "Account already exits with this phone", code: 400 })
             }
-            let hash = await bcrypt.hash(password, 10)
             let pin = generatePin()
-            // await sendOtp(phone, pin)
-            let result = await AccountModel.create({ firstName, lastName, idType, idCard: imageUrl, phone, password: hash, otp: pin, registrationBy })
+            let result = await AccountModel.create({ firstName, lastName,phone,otp: pin, registrationBy })
             await WalletModel.create({ userId: result?._id })
             return res.status(200).json({ data: { userInfo: result, otp: pin }, msg: "Account Created With This Phone. Kindly Verify Your Account", status: 200 })
         }
@@ -47,6 +42,41 @@ const createAccount = async (req, res) => {
         console.log(error)
     }
 }
+
+const updateAccountOnboardingData = async (req, res) => {
+    try {
+        let { idType, password,registrationBy } = req.body
+        let {id} = req?.params
+
+        let image = req?.file
+        let imageUrl = await uploadFile(image);
+
+        if (registrationBy == "email") {
+
+            let alreadyExits = await AccountModel.findById(id)
+            if (!alreadyExits) {
+                return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: null }, msg: "Account not exits with this email", code: 400 })
+            }
+            let hash = await bcrypt.hash(password, 10)
+            let result = await AccountModel.findByIdAndUpdate({idType, idCard: imageUrl, password: hash,},{new:true})
+            return res.status(200).json({ data: result, msg: "Account Created With This Email", status: 200 })
+        }
+        else {
+            let alreadyExits = await AccountModel.findById(id)
+            if (!alreadyExits) {
+                return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: null }, msg: "Account not exits with this phone", code: 400 })
+            }
+            let hash = await bcrypt.hash(password, 10)
+            let result = await AccountModel.findByIdAndUpdate({idType,idCard: imageUrl, password: hash,},{new:true})
+            return res.status(200).json({ data:result, msg: "Account Created With This Phone.", status: 200 })
+        }
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ msg: "Internal server error", error });
+    }
+}
+
 const loginAccount = async (req, res) => {
     try {
         let { email, password, loginBy, phone } = req.body
@@ -280,4 +310,4 @@ const updateProfile = async (req, res) => {
     }
 }
 
-module.exports = { uploadPicture, createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, deleteAccount, updateProfile, reactivateAccount,createAccountWithGoogle,loginAccountWithGoogle}
+module.exports = {updateAccountOnboardingData,uploadPicture, createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, deleteAccount, updateProfile, reactivateAccount,createAccountWithGoogle,loginAccountWithGoogle}
