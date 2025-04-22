@@ -12,7 +12,7 @@ const { WalletModel } = require("../models/wallet.model");
 // NORMAL AUTH FLOW 
 const createAccount = async (req, res) => {
     try {
-        let { firstName, lastName,phone, email, registrationBy } = req.body
+        let { firstName, lastName, phone, email, registrationBy } = req.body
 
 
         if (registrationBy == "email") {
@@ -23,7 +23,7 @@ const createAccount = async (req, res) => {
             }
             let pin = generatePin()
             await sendDynamicMail("verification", email, firstName, pin);
-            let result = await AccountModel.create({ firstName, lastName,email,otp: pin, registrationBy })
+            let result = await AccountModel.create({ firstName, lastName, email, otp: pin, registrationBy })
             await WalletModel.create({ userId: result?._id })
             return res.status(200).json({ data: result, msg: "Account Created With This Email. Kindly Verify Your Account", status: 200 })
         }
@@ -33,7 +33,7 @@ const createAccount = async (req, res) => {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: alreadyExits }, msg: "Account already exits with this phone", code: 400 })
             }
             let pin = generatePin()
-            let result = await AccountModel.create({ firstName, lastName,phone,otp: pin, registrationBy })
+            let result = await AccountModel.create({ firstName, lastName, phone, otp: pin, registrationBy })
             await WalletModel.create({ userId: result?._id })
             return res.status(200).json({ data: { userInfo: result, otp: pin }, msg: "Account Created With This Phone. Kindly Verify Your Account", status: 200 })
         }
@@ -45,8 +45,8 @@ const createAccount = async (req, res) => {
 
 const updateAccountOnboardingData = async (req, res) => {
     try {
-        let { idType, password,registrationBy } = req.body
-        let {id} = req?.params
+        let { idType, password, registrationBy } = req.body
+        let { id } = req?.params
         let image = req?.file
         let imageUrl = await uploadFile(image);
 
@@ -57,7 +57,7 @@ const updateAccountOnboardingData = async (req, res) => {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: null }, msg: "Account not exits with this email", code: 400 })
             }
             let hash = await bcrypt.hash(password, 10)
-            let result = await AccountModel.findByIdAndUpdate(id,{idType, idCard: imageUrl, password: hash,},{new:true})
+            let result = await AccountModel.findByIdAndUpdate(id, { idType, idCard: imageUrl, password: hash, }, { new: true })
             return res.status(200).json({ data: result, msg: "Account Created With This Email", status: 200 })
         }
         else {
@@ -66,8 +66,8 @@ const updateAccountOnboardingData = async (req, res) => {
                 return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: null }, msg: "Account not exits with this phone", code: 400 })
             }
             let hash = await bcrypt.hash(password, 10)
-            let result = await AccountModel.findByIdAndUpdate(id,{idType,idCard: imageUrl, password: hash,},{new:true})
-            return res.status(200).json({ data:result, msg: "Account Created With This Phone.", status: 200 })
+            let result = await AccountModel.findByIdAndUpdate(id, { idType, idCard: imageUrl, password: hash, }, { new: true })
+            return res.status(200).json({ data: result, msg: "Account Created With This Phone.", status: 200 })
         }
     }
     catch (error) {
@@ -136,29 +136,17 @@ const loginAccount = async (req, res) => {
 }
 const resendOtp = async (req, res) => {
     try {
-        let { email, registrationSource, phone } = req.body
+        let { email, } = req.body
 
-        if (registrationSource == "email") {
-            let findUser = await AccountModel.findOne({ email })
-            if (!findUser) {
-                return res.status(400).json({ data: null, msg: "Account not exits with this email", code: 400 })
-            }
-            let name = findUser?.firstName?.length > 0 ? findUser?.firstName : "anonymous"
-            let pin = generatePin()
-            await sendDynamicMail("verification", email, name, pin);
-            await AccountModel.findByIdAndUpdate(findUser?._id, { otp: pin }, { new: true })
-            return res.status(200).json({ data: null, msg: "OTP send sucessfully to email", code: 200 })
+        let findUser = await AccountModel.findOne({ email })
+        if (!findUser) {
+            return res.status(400).json({ data: null, msg: "Account not exits with this email", code: 400 })
         }
-        else {
-            let findUser = await AccountModel.findOne({ phone })
-            if (!findUser) {
-                return res.status(400).json({ data: null, msg: "Account not exits with this phone", code: 400 })
-            }
-            let pin = generatePin()
-            // await sendOtp(phone, pin)
-            await AccountModel.findByIdAndUpdate(findUser?._id, { otp: pin }, { new: true })
-            return res.status(200).json({ data: pin, msg: "OTP send sucessfully to phone", code: 200 })
-        }
+        let name = findUser?.firstName?.length > 0 ? findUser?.firstName : "anonymous"
+        let pin = generatePin()
+        await sendDynamicMail("verification", email, name, pin);
+        await AccountModel.findByIdAndUpdate(findUser?._id, { otp: pin, otpVerified: false }, { new: true })
+        return res.status(200).json({ data: null, msg: "OTP send sucessfully to email", code: 200 })
     }
     catch (error) {
         console.log(error)
@@ -166,40 +154,87 @@ const resendOtp = async (req, res) => {
 }
 const verifyOtp = async (req, res) => {
     try {
-        let { email, otp, registrationSource, phone } = req.body
-        if (registrationSource === "email") {
-            let user = await AccountModel.findOne({ email: email })
-            if (!user) {
-                return res.status(400).json({ data: null, msg: "Account not exits with this email", code: 400 })
-            }
-            else {
-                console.log(otp)
-                console.log(user?.otp)
-                if (otp == user?.otp) {
-                    let verifiedResponse = await AccountModel.findByIdAndUpdate(user?._id, { otp: null, otpVerified: true, accountVerified: true }, { new: true })
-                    return res.status(200).json({ data: verifiedResponse, msg: "Account Verified", code: 200 })
-                }
-                else {
-                    return res.status(403).json({ msg: "Invalid Otp", code: 403 })
-                }
-
-            }
+        let { email, otp } = req.body
+        let user = await AccountModel.findOne({ email: email })
+        if (!user) {
+            return res.status(400).json({ data: null, msg: "Account not exits with this email", code: 400 })
         }
         else {
-            let user = await AccountModel.findOne({ phone })
-            if (!user) {
-                return res.status(400).json({ data: null, msg: "Account not exits with this phone", code: 400 })
+            if (otp == user?.otp) {
+                let verifiedResponse = await AccountModel.findByIdAndUpdate(user?._id, { otp: null, otpVerified: true, accountVerified: true }, { new: true })
+                return res.status(200).json({ data: verifiedResponse, msg: "Account Verified", code: 200 })
             }
             else {
-                if (otp == user?.otp) {
-                    let verifiedResponse = await AccountModel.findByIdAndUpdate(user?._id, { otp: null, otpVerified: true, accountVerified: true }, { new: true })
-                    return res.status(200).json({ data: verifiedResponse, msg: "Account Verified", code: 200 })
-                }
-                else {
-                    return res.status(403).json({ msg: "Invalid Otp", code: 403 })
-                }
-
+                return res.status(403).json({ msg: "Invalid Otp", code: 403 })
             }
+
+        }
+
+    }
+    catch (error) {
+        console.log(error)
+    }
+}
+
+const changePassword = async (req, res) => {
+    try {
+        let { email, password } = req.body
+        let user = await AccountModel.findOne({ email: email })
+        if (!user) {
+            return res.status(400).json({ data: null, msg: "Account not exits with this email", code: 400 })
+        }
+        else {
+            if(user?.otpVerified){
+                let hash = await bcrypt.hash(password, 10)
+                let verifiedResponse = await AccountModel.findByIdAndUpdate(user?._id, { password:hash}, { new: true })
+                return res.status(200).json({ data: verifiedResponse, msg: "Password Changed", code: 200 })
+            }
+            return res.status(403).json({ data:user,msg: "OTP NOT VERIFIED", code: 200 })
+
+
+        }
+
+    }
+    catch (error) {
+        console.log(error)
+    }
+}
+const sendOtpToPhone = async (req, res) => {
+    try {
+        let { phone, id } = req.body
+        console.log(id, 'id')
+
+        let alreadyExits = await AccountModel.findById(id)
+        console.log(alreadyExits, 'alreadyExits')
+        if (!alreadyExits) {
+            return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: alreadyExits }, msg: "Account not exits with this id", code: 400 })
+        }
+        let pin = generatePin()
+        // await sendOtp(phone,pin)
+        let result = await AccountModel.findByIdAndUpdate(id, { otp: pin }, { new: true })
+        return res.status(200).json({ data: { userInfo: result, otp: pin }, msg: "Otp Send Kindly Verify Your Phone", status: 200 })
+    }
+    catch (error) {
+        console.log(error)
+    }
+}
+
+const verifyOtpByPhone = async (req, res) => {
+    try {
+        let { id, otp, phone } = req.body
+        let user = await AccountModel.findById(id)
+        if (!user) {
+            return res.status(400).json({ data: null, msg: "Account not exits with this id", code: 400 })
+        }
+        else {
+            if (otp == user?.otp) {
+                let verifiedResponse = await AccountModel.findByIdAndUpdate(user?._id, { otp: null, phoneVerified: true, phone }, { new: true })
+                return res.status(200).json({ data: verifiedResponse, msg: "Phone Verified", code: 200 })
+            }
+            else {
+                return res.status(403).json({ msg: "Invalid Otp", code: 403 })
+            }
+
         }
     }
     catch (error) {
@@ -274,7 +309,7 @@ const getAccountById = async (req, res) => {
 }
 const getAllAccount = async (req, res) => {
     try {
-        let findUser = await AccountModel.find()
+        let findUser = await AccountModel.find({})
         return res.status(200).json({ data: findUser, code: 200 })
 
     }
@@ -309,4 +344,4 @@ const updateProfile = async (req, res) => {
     }
 }
 
-module.exports = {updateAccountOnboardingData,uploadPicture, createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, deleteAccount, updateProfile, reactivateAccount,createAccountWithGoogle,loginAccountWithGoogle}
+module.exports = { sendOtpToPhone, verifyOtpByPhone, updateAccountOnboardingData, uploadPicture, createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, deleteAccount, updateProfile, reactivateAccount, createAccountWithGoogle, loginAccountWithGoogle,changePassword}

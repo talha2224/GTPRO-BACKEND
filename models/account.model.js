@@ -15,6 +15,7 @@ const AccountSchema = mongoose.Schema({
 
 
     phone:{type:String,default:null},
+    phoneVerified:{type:String,default:null},
     email:{type:String,default:null},
 
     otp:{type:Number,default:null},
