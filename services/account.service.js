@@ -245,14 +245,12 @@ const verifyOtpByPhone = async (req, res) => {
 // GOOGLE AUTH FLOW
 const createAccountWithGoogle = async (req, res) => {
     try {
-        let { firstName, lastName, idType, email } = req.body
-        let image = req?.file
-        let imageUrl = await uploadFile(image);
+        let { firstName, lastName, email } = req.body
         let alreadyExits = await AccountModel.findOne({ email })
         if (alreadyExits) {
             return res.status(400).json({ data: alreadyExits, msg: "Account already exits with this email", code: 400 })
         }
-        let result = await AccountModel.create({ firstName, lastName, idType, idCard: imageUrl, email, otpVerified: true, accountVerified: true, registrationBy: "email", registrationSource: "Google" })
+        let result = await AccountModel.create({ firstName, lastName,, email, otpVerified: true, accountVerified: true, registrationBy: "email", registrationSource: "Google" })
         await WalletModel.create({ userId: result?._id })
         return res.status(200).json({ data: result, msg: "Account Created And Verified", status: 200 })
 
