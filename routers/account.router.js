@@ -5,7 +5,7 @@ const {updateAccountOnboardingData,createAccount, loginAccount, getAccountById, 
 router.post("/register",createAccount)
 router.put("/update/onboarding/data/:id",multipleupload.single('image'),updateAccountOnboardingData)
 router.post("/login",loginAccount)
-router.post("/register/google",multipleupload.single('image'),createAccountWithGoogle)
+router.post("/register/google",createAccountWithGoogle)
 router.post("/login/google",loginAccountWithGoogle)
 router.post("/send/otp",resendOtp)
 router.post("/send/otp/phone",sendOtpToPhone)
