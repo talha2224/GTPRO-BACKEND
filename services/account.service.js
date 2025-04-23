@@ -210,7 +210,7 @@ const sendOtpToPhone = async (req, res) => {
             return res.status(400).json({ data: { accountVerified: alreadyExits?.accountVerified, userInfo: alreadyExits }, msg: "Account not exits with this id", code: 400 })
         }
         let pin = generatePin()
-        // await sendOtp(phone,pin)
+        await sendOtp(phone,pin)
         let result = await AccountModel.findByIdAndUpdate(id, { otp: pin }, { new: true })
         return res.status(200).json({ data: { userInfo: result, otp: pin }, msg: "Otp Send Kindly Verify Your Phone", status: 200 })
     }
