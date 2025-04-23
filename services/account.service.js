@@ -250,9 +250,9 @@ const createAccountWithGoogle = async (req, res) => {
         if (alreadyExits) {
             return res.status(400).json({ data: alreadyExits, msg: "Account already exits with this email", code: 400 })
         }
-        let result = await AccountModel.create({ firstName, lastName,, email, otpVerified: true, accountVerified: true, registrationBy: "email", registrationSource: "Google" })
+        let result = await AccountModel.create({ firstName, lastName,email, otpVerified: true, accountVerified: true, registrationBy: "email", registrationSource: "Google" })
         await WalletModel.create({ userId: result?._id })
-        return res.status(200).json({ data: result, msg: "Account Created And Verified", status: 200 })
+        return res.status(200).json({ data: result, msg: "Account Created And Verified With Google", status: 200 })
 
     }
     catch (error) {
