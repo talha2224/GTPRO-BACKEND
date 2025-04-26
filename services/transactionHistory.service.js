@@ -4,7 +4,7 @@ const { TransactionHistoryModel } = require("../models/transactionHistory.model"
 
 const getHistory = async (req, res) => {
     try {
-        let data = await TransactionHistoryModel.find({ userId: req.params?.id }).populate("transferRequestId")
+        let data = await TransactionHistoryModel.find({ userId: req.params?.id }).populate("transferRequestId").populate("loanRequestId")
         return res.status(200).json({ data: data, msg: "", status: 200 });
     }
     catch (error) {
@@ -15,7 +15,7 @@ const getHistory = async (req, res) => {
 
 const getAllHistory = async (req, res) => {
     try {
-        let data = await TransactionHistoryModel.find({}).populate("transferRequestId").populate("userId")
+        let data = await TransactionHistoryModel.find({}).populate("transferRequestId").populate("userId").populate("loanRequestId")
         return res.status(200).json({ data: data, msg: "", status: 200 });
     }
     catch (error) {

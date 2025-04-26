@@ -199,6 +199,31 @@ const changePassword = async (req, res) => {
         console.log(error)
     }
 }
+const changePasswordByPassword = async (req, res) => {
+    try {
+        let { id, oldPassword,newPassword } = req.body
+        let user = await AccountModel.findById(id)
+        if (!user) {
+            return res.status(400).json({ data: null, msg: "Account not exits with this email", code: 400 })
+        }
+        else {
+            let compare = await bcrypt.compare(oldPassword, user.password)
+            if(compare){
+                let hash = await bcrypt.hash(newPassword, 10)
+                let verifiedResponse = await AccountModel.findByIdAndUpdate(id,{ password:hash}, { new: true })
+                return res.status(200).json({ data: verifiedResponse, msg: "Password Changed", code: 200 })
+            }
+            return res.status(403).json({ data:null,msg: "Current Password NOT Valid", code: 403 })
+
+
+        }
+
+    }
+    catch (error) {
+        console.log(error)
+    }
+}
+
 const sendOtpToPhone = async (req, res) => {
     try {
         let { phone, id } = req.body
@@ -329,11 +354,12 @@ const uploadPicture = async (req, res) => {
     }
 }
 
+
 const updateProfile = async (req, res) => {
     try {
         let { id } = req.params;
-        let { firstName, lastName, middleName, email, phone, dob, address, zipCode, state, city } = req.body
-        let updateProfile = await AccountModel.findByIdAndUpdate(id, { firstName, lastName, email, phone, dob, address, zipCode, state, city, middleName }, { new: true })
+        let { firstName, lastName, email} = req.body
+        let updateProfile = await AccountModel.findByIdAndUpdate(id, { firstName, lastName, email}, { new: true })
         return res.status(200).json({ data: updateProfile, msg: "Profile Data Updated" })
     }
     catch (error) {
@@ -341,4 +367,4 @@ const updateProfile = async (req, res) => {
     }
 }
 
-module.exports = { sendOtpToPhone, verifyOtpByPhone, updateAccountOnboardingData, uploadPicture, createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, deleteAccount, updateProfile, reactivateAccount, createAccountWithGoogle, loginAccountWithGoogle,changePassword}
+module.exports = { sendOtpToPhone, verifyOtpByPhone, updateAccountOnboardingData, uploadPicture, createAccount, loginAccount, getAccountById, resendOtp, verifyOtp, getAllAccount, deleteAccount, updateProfile, reactivateAccount, createAccountWithGoogle, loginAccountWithGoogle,changePassword,changePasswordByPassword}
