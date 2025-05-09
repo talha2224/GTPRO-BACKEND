@@ -6,6 +6,7 @@ const transactionHistorySchema = mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true },
     transferRequestId: { type: mongoose.Schema.Types.ObjectId, ref: "Transffer", default: null },
     loanRequestId: { type: mongoose.Schema.Types.ObjectId, ref: "Loan", default: null },
+    splitRequestId: { type: mongoose.Schema.Types.ObjectId, ref: "Split", default: null },
     amount: { type: Number, default: 0 },
     requestType: { type: String, default: "transffer" },
     approved: { type: Boolean, default: false },
