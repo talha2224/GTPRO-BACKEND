@@ -1,5 +1,4 @@
 const router = require("express").Router()
-const { multipleupload } = require("../config/multer.config")
 const {approvedDepositRequest, declineDepositRequest, getAll, getAllApproved, getAllUnApproved, getAllUser, SplitAmount } = require("../services/split.service")
 
 router.post("/create",SplitAmount)

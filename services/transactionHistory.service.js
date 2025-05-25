@@ -15,7 +15,7 @@ const getHistory = async (req, res) => {
 
 const getAllHistory = async (req, res) => {
     try {
-        let data = await TransactionHistoryModel.find({}).populate("transferRequestId").populate("userId").populate("loanRequestId")
+        let data = await TransactionHistoryModel.find({}).populate("transferRequestId").populate("userId").populate("loanRequestId").populate("splitRequestId")
         return res.status(200).json({ data: data, msg: "", status: 200 });
     }
     catch (error) {
