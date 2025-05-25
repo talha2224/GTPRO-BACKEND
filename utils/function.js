@@ -21,7 +21,7 @@ module.exports = {
     }),
     sendOtp: async (phoneNumber, otp) => {
         try {
-            const message = await client.messages.create({ body: `Your OTP for hop on account verification is: ${otp}`, from: twilioPhoneNumber, to: phoneNumber, });
+            const message = await client.messages.create({ body: `Your OTP for GTPRO account verification is: ${otp}`, from: twilioPhoneNumber, to: phoneNumber, });
             console.log('Message sent:', message.sid);
             return { success: true, sid: message.sid };
         }
