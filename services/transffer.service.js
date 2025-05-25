@@ -9,16 +9,17 @@ const { RecieptModel } = require("../models/reciept.model");
 const TransferAmount = async (req, res) => {
     try {
         let { userId, amount, recipientName, accountNumberOrWalletAddress, bank, currency, transactionPin } = req.body
-        // let image = req?.file
-        // let imageUrl = await uploadFile(image);
-        // let isReciept = await RecieptModel.findOne({ reciverAccountNumber: reciverAccountNumber, userId: userId })
-        // if (!isReciept) {
-        //     await RecieptModel.create({ userId, reciverAccountNumber, reciverOtherBankDetails, reciverCountry, reciverCity, reciverOtherInfo })
-        // }
+        let currentBalance = await WalletModel.findOne({ userId })
+        if (currentBalance.totalBalance >= amount) {
+            let data = await transfferModel.create({ userId, amount, recipientName, accountNumberOrWalletAddress, bank, currency, transactionPin })
+            await TransactionHistoryModel.create({ transferRequestId: data._id, userId, amount, requestType: "transffer" });
+            await WalletModel.findOneAndUpdate({ userId }, { totalBalance: currentBalance?.totalBalance-amount, expense: currentBalance?.expense + amount }, { new: true })
+            return res.status(200).json({ data: data, msg: "Transffer Request Send To Admin", status: 200 })
+        }
+        else {
+            return res.status(403).json({ data: null, msg: `Insufficent Balance Kindly Deposit Amount : available balance is $${currentBalance.totalBalance}`, status: 403 })
+        }
 
-        let data = await transfferModel.create({userId, amount, recipientName, accountNumberOrWalletAddress, bank, currency, transactionPin })
-        await TransactionHistoryModel.create({ transferRequestId: data._id, userId, amount, requestType: "transffer" });
-        return res.status(200).json({ data: data, msg: "Transffer Request Send To Admin", status: 200 })
     }
     catch (error) {
         console.log(error)
@@ -63,9 +64,7 @@ const getAllUser = async (req, res) => {
 const approvedDepositRequest = async (req, res) => {
     try {
         let data = await transfferModel.findByIdAndUpdate(req?.params?.id, { approved: true, decline: false }, { new: true }).populate("userId")
-        console.log(data?._id, 'data?.userId')
-        let currentBalance = await WalletModel.findOne({ userId: data?.userId })
-        await WalletModel.findOneAndUpdate({ userId: data?.userId }, {totalBalance:currentBalance?.totalBalance-data?.amount,expense:currentBalance?.expense+data?.amount},{new:true})
+        await WalletModel.findOne({ userId: data?.userId })
         await TransactionHistoryModel.findOneAndUpdate({ transferRequestId: data?._id }, { $set: { approved: true } }, { new: true })
         return res.status(200).json({ data: data, msg: "Transffer Request Approved", status: 200 })
     }
@@ -76,7 +75,9 @@ const approvedDepositRequest = async (req, res) => {
 const declineDepositRequest = async (req, res) => {
     try {
         let data = await transfferModel.findByIdAndUpdate(req?.params?.id, { approved: false, decline: true }, { new: true }).populate("userId")
+        let currentBalance = await WalletModel.findOne({ userId:data?.userId })
         await TransactionHistoryModel.findOneAndUpdate({ transferRequestId: req?.params?.id }, { $set: { decline: true } }, { new: true })
+        await WalletModel.findOneAndUpdate({ userId: data?.userId }, { totalBalance: currentBalance?.totalBalance + data?.amount, expense: currentBalance?.expense - data?.amount }, { new: true })
         return res.status(200).json({ data: data, msg: "Transffer Request Declined", status: 200 })
     }
     catch (error) {
